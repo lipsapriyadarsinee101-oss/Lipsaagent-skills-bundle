@@ -1,6 +1,6 @@
 # Lipsa Agent Skills Bundle
 
-One repo for six agent-skill projects, pulled in as git submodules, with a small Rust CLI that installs them into Claude Code, Codex and other Agent Skills hosts.
+One repo for ten agent-skill projects, pulled in as git submodules, with a small Rust CLI that installs them into Claude Code, Codex and other Agent Skills hosts.
 
 | Bundle | What it does | Skills | Upstream | License |
 |---|---|---|---|---|
@@ -10,6 +10,10 @@ One repo for six agent-skill projects, pulled in as git submodules, with a small
 | **Humanizer** | Removes signs of AI-generated writing from text | `humanizer` | [blader/humanizer](https://github.com/blader/humanizer) | MIT |
 | **Impeccable** | Design vocabulary and commands: audit, critique, polish, distill… | `impeccable` | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) | Apache 2.0 |
 | **UI UX Pro Max** | Design intelligence: styles, palettes, typography, stack guidelines | `ui-ux-pro-max`, `design`, `design-system`, `ui-styling`, `brand`, `banner-design`, `slides` | [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT |
+| **Rust Skills** | 265 Rust rules: ownership, errors, async, unsafe, API design, performance | `rust-skills` | [leonardomso/rust-skills](https://github.com/leonardomso/rust-skills) | MIT |
+| **Engineering** | Addy Osmani's full dev lifecycle: spec, plan, TDD, debug, review, secure, ship | 25 skills, e.g. `spec-driven-development`, `test-driven-development`, `security-and-hardening` (`list` shows all) | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT |
+| **Anthropic** | Official skills for building MCP servers, new skills, web app tests and Claude API apps | `mcp-builder`, `skill-creator`, `webapp-testing`, `claude-api` | [anthropics/skills](https://github.com/anthropics/skills) | Apache 2.0 |
+| **Vercel** | React and React Native performance and composition guidance | `react-best-practices`, `composition-patterns`, `react-view-transitions`, `react-native-skills` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT |
 
 ## Install
 
@@ -18,7 +22,7 @@ Needs git and [Rust](https://rust-lang.org/tools/install).
 ```bash
 git clone --recurse-submodules --shallow-submodules https://github.com/lipsapriyadarsinee101-oss/Lipsaagent-skills-bundle.git
 cd Lipsaagent-skills-bundle
-cargo run --release -- install            # all 17 skills into ~/.claude/skills
+cargo run --release -- install            # all 51 skills into ~/.claude/skills
 ```
 
 Restart your agent afterwards so it picks the skills up.
@@ -75,11 +79,11 @@ Then add a line for each skill folder to `SKILLS` in `src/main.rs` and run `carg
 ## Layout
 
 ```
-vendor/          the six upstream repos (git submodules, untouched)
+vendor/          the ten upstream repos (git submodules, untouched)
 src/main.rs      the installer (std only, no dependencies)
 .github/         CI: builds, tests and checks every skill path
 ```
 
 ## Credits and licenses
 
-Every skill belongs to its authors and keeps its own license inside its submodule (`vendor/*/LICENSE`, plus `vendor/impeccable/NOTICE.md` and `vendor/rea/THIRD_PARTY_NOTICES.md`). This repo does not modify them. The installer code in `src/` is MIT, see [LICENSE](LICENSE).
+Every skill belongs to its authors and keeps its own license inside its submodule (`vendor/*/LICENSE`, per-skill `LICENSE.txt` in `vendor/anthropic-skills`, the `license:` field in each Vercel `SKILL.md`, plus `vendor/impeccable/NOTICE.md` and `vendor/rea/THIRD_PARTY_NOTICES.md`). This repo does not modify them. Only openly licensed skills are wired into the installer: Anthropic's docx/pdf/pptx/xlsx and Vercel's unlicensed skills stay in their submodules but are not installed. `frontend-design` is left out because Hallmark and Impeccable already build on it. The installer code in `src/` is MIT, see [LICENSE](LICENSE).

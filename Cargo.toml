@@ -2,7 +2,7 @@
 name = "skills-bundle"
 version = "0.1.0"
 edition = "2021"
-description = "Installs the vendored agent skills (REA, Ponytail, Hallmark, Humanizer, Impeccable, UI UX Pro Max) into Claude Code, Codex and other agents"
+description = "Installs the vendored agent skills (design, writing, Rust, engineering and more) into Claude Code, Codex and other agents"
 license = "MIT"
 publish = false
 

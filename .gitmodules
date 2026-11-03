@@ -16,3 +16,15 @@
 [submodule "vendor/ui-ux-pro-max"]
 	path = vendor/ui-ux-pro-max
 	url = https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git
+[submodule "vendor/anthropic-skills"]
+	path = vendor/anthropic-skills
+	url = https://github.com/anthropics/skills.git
+[submodule "vendor/addy-agent-skills"]
+	path = vendor/addy-agent-skills
+	url = https://github.com/addyosmani/agent-skills.git
+[submodule "vendor/vercel-agent-skills"]
+	path = vendor/vercel-agent-skills
+	url = https://github.com/vercel-labs/agent-skills.git
+[submodule "vendor/rust-skills"]
+	path = vendor/rust-skills
+	url = https://github.com/leonardomso/rust-skills.git

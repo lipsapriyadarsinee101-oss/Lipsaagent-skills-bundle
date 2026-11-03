@@ -41,6 +41,40 @@ const SKILLS: &[Skill] = &[
     s("ui-ux-pro-max", "brand", "vendor/ui-ux-pro-max/.claude/skills/brand"),
     s("ui-ux-pro-max", "banner-design", "vendor/ui-ux-pro-max/.claude/skills/banner-design"),
     s("ui-ux-pro-max", "slides", "vendor/ui-ux-pro-max/.claude/skills/slides"),
+    s("rust", "rust-skills", "vendor/rust-skills"),
+    s("anthropic", "mcp-builder", "vendor/anthropic-skills/skills/mcp-builder"),
+    s("anthropic", "skill-creator", "vendor/anthropic-skills/skills/skill-creator"),
+    s("anthropic", "webapp-testing", "vendor/anthropic-skills/skills/webapp-testing"),
+    s("anthropic", "claude-api", "vendor/anthropic-skills/skills/claude-api"),
+    s("vercel", "react-best-practices", "vendor/vercel-agent-skills/skills/react-best-practices"),
+    s("vercel", "composition-patterns", "vendor/vercel-agent-skills/skills/composition-patterns"),
+    s("vercel", "react-view-transitions", "vendor/vercel-agent-skills/skills/react-view-transitions"),
+    s("vercel", "react-native-skills", "vendor/vercel-agent-skills/skills/react-native-skills"),
+    s("engineering", "using-agent-skills", "vendor/addy-agent-skills/skills/using-agent-skills"),
+    s("engineering", "interview-me", "vendor/addy-agent-skills/skills/interview-me"),
+    s("engineering", "idea-refine", "vendor/addy-agent-skills/skills/idea-refine"),
+    s("engineering", "spec-driven-development", "vendor/addy-agent-skills/skills/spec-driven-development"),
+    s("engineering", "planning-and-task-breakdown", "vendor/addy-agent-skills/skills/planning-and-task-breakdown"),
+    s("engineering", "incremental-implementation", "vendor/addy-agent-skills/skills/incremental-implementation"),
+    s("engineering", "constraint-driven-development", "vendor/addy-agent-skills/skills/constraint-driven-development"),
+    s("engineering", "doubt-driven-development", "vendor/addy-agent-skills/skills/doubt-driven-development"),
+    s("engineering", "source-driven-development", "vendor/addy-agent-skills/skills/source-driven-development"),
+    s("engineering", "test-driven-development", "vendor/addy-agent-skills/skills/test-driven-development"),
+    s("engineering", "context-engineering", "vendor/addy-agent-skills/skills/context-engineering"),
+    s("engineering", "api-and-interface-design", "vendor/addy-agent-skills/skills/api-and-interface-design"),
+    s("engineering", "frontend-ui-engineering", "vendor/addy-agent-skills/skills/frontend-ui-engineering"),
+    s("engineering", "browser-testing-with-devtools", "vendor/addy-agent-skills/skills/browser-testing-with-devtools"),
+    s("engineering", "debugging-and-error-recovery", "vendor/addy-agent-skills/skills/debugging-and-error-recovery"),
+    s("engineering", "code-review-and-quality", "vendor/addy-agent-skills/skills/code-review-and-quality"),
+    s("engineering", "code-simplification", "vendor/addy-agent-skills/skills/code-simplification"),
+    s("engineering", "security-and-hardening", "vendor/addy-agent-skills/skills/security-and-hardening"),
+    s("engineering", "performance-optimization", "vendor/addy-agent-skills/skills/performance-optimization"),
+    s("engineering", "observability-and-instrumentation", "vendor/addy-agent-skills/skills/observability-and-instrumentation"),
+    s("engineering", "documentation-and-adrs", "vendor/addy-agent-skills/skills/documentation-and-adrs"),
+    s("engineering", "git-workflow-and-versioning", "vendor/addy-agent-skills/skills/git-workflow-and-versioning"),
+    s("engineering", "ci-cd-and-automation", "vendor/addy-agent-skills/skills/ci-cd-and-automation"),
+    s("engineering", "deprecation-and-migration", "vendor/addy-agent-skills/skills/deprecation-and-migration"),
+    s("engineering", "shipping-and-launch", "vendor/addy-agent-skills/skills/shipping-and-launch"),
 ];
 
 /// Agent name -> skills dir relative to home (global) or project root (--project).
@@ -278,7 +312,7 @@ mod tests {
     #[test]
     fn install_and_uninstall_roundtrip() {
         let tmp = env::temp_dir().join(format!("skills-bundle-test-{}", std::process::id()));
-        let src = repo_root().join(SKILLS[7].path); // hallmark
+        let src = repo_root().join(SKILLS.iter().find(|s| s.name == "hallmark").unwrap().path);
         let dst = tmp.join("hallmark");
         fs::create_dir_all(&tmp).unwrap();
         assert_eq!(place(&src, &dst, false).unwrap(), "→");
