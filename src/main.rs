@@ -184,6 +184,17 @@ fn run(o: &Opts, install: bool) -> Result<(), String> {
     let root = repo_root();
     let base = if o.project { env::current_dir().map_err(|e| e.to_string())? } else { home()? };
     let mut missing = false;
+    let mut failures = 0;
+    if selected(o).next().is_none() {
+        return Err("no skills match --only; run list for valid names".into());
+    }
+    if let Some(names) = &o.only {
+        for name in names {
+            if !SKILLS.iter().any(|s| s.bundle == name || s.name == name) {
+                return Err(format!("unknown skill or bundle '{name}'"));
+            }
+        }
+    }
     for agent in &o.agents {
         let rel = AGENTS.iter().find(|(n, _)| n == agent).unwrap().1;
         let dir = base.join(rel);
@@ -203,7 +214,7 @@ fn run(o: &Opts, install: bool) -> Result<(), String> {
             };
             match r {
                 Ok(msg) => println!("  {} {}", msg, sk.name),
-                Err(e) => println!("  ✗ {} ({e})", sk.name),
+                Err(e) => { failures += 1; println!("  ✗ {} ({e})", sk.name); },
             }
         }
     }
@@ -213,21 +224,69 @@ fn run(o: &Opts, install: bool) -> Result<(), String> {
     if install && selected(o).any(|s| s.bundle == "rea") {
         println!("\nREA also needs its MCP server for the binary tools: npx -y rea-agents setup");
     }
-    Ok(())
+    if missing || failures > 0 {
+        Err(format!("installation incomplete: {failures} operation errors; missing sources: {missing}"))
+    } else { Ok(()) }
+}
+
+const OWNER_FILE: &str = ".skills-bundle-owner";
+
+fn ownership(src: &Path) -> io::Result<String> {
+    Ok(format!("skills-bundle-v1\n{}\n", fs::canonicalize(src)?.display()))
+}
+
+fn owned(src: &Path, dst: &Path) -> bool {
+    match (ownership(src), fs::read_to_string(dst.join(OWNER_FILE))) {
+        (Ok(expected), Ok(actual)) => expected == actual,
+        _ => false,
+    }
+}
+
+/// Refuse to remove a copied skill after local edits or additional user files.
+fn same_tree(src: &Path, dst: &Path) -> io::Result<bool> {
+    let names = |path: &Path| -> io::Result<Vec<std::ffi::OsString>> {
+        let mut result = Vec::new();
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            let name = entry.file_name();
+            if name != OWNER_FILE && name != ".git" && name != "node_modules" { result.push(name); }
+        }
+        result.sort();
+        Ok(result)
+    };
+    let entries = names(src)?;
+    if entries != names(dst)? { return Ok(false); }
+    for name in entries {
+        let a = src.join(&name); let b = dst.join(&name);
+        let at = fs::symlink_metadata(&a)?.file_type();
+        let bt = fs::symlink_metadata(&b)?.file_type();
+        if at.is_symlink() || bt.is_symlink() { return Ok(false); }
+        if at.is_dir() && bt.is_dir() {
+            if !same_tree(&a, &b)? { return Ok(false); }
+        } else if at.is_file() && bt.is_file() {
+            if fs::read(a)? != fs::read(b)? { return Ok(false); }
+        } else { return Ok(false); }
+    }
+    Ok(true)
 }
 
 /// Link (or copy) src to dst. Never overwrites a folder the user made themselves.
 fn place(src: &Path, dst: &Path, copy: bool) -> io::Result<&'static str> {
+    if !src.join("SKILL.md").is_file() {
+        return Err(io::Error::new(io::ErrorKind::NotFound, "source SKILL.md missing"));
+    }
     if let Ok(target) = fs::read_link(dst) {
         if target == src {
             return Ok("=");
         }
-        remove_link(dst)?; // stale link from an older checkout
+        return Err(io::Error::new(io::ErrorKind::AlreadyExists, "link points elsewhere, left untouched"));
     } else if dst.exists() {
+        if owned(src, dst) && same_tree(src, dst)? { return Ok("="); }
         return Err(io::Error::new(io::ErrorKind::AlreadyExists, "already exists, left untouched"));
     }
     if copy {
         copy_dir(src, dst)?;
+        fs::write(dst.join(OWNER_FILE), ownership(src)?)?;
         return Ok("+");
     }
     #[cfg(unix)]
@@ -237,7 +296,7 @@ fn place(src: &Path, dst: &Path, copy: bool) -> io::Result<&'static str> {
     Ok("→")
 }
 
-/// Only removes links pointing into this repo, or copies marked by a matching SKILL.md.
+/// Only removes this tool's links or explicitly owned, unmodified copies.
 fn remove(src: &Path, dst: &Path) -> io::Result<&'static str> {
     if let Ok(target) = fs::read_link(dst) {
         if target == src {
@@ -246,7 +305,7 @@ fn remove(src: &Path, dst: &Path) -> io::Result<&'static str> {
         }
         return Ok("· (link points elsewhere, kept)");
     }
-    if dst.is_dir() && fs::read(dst.join("SKILL.md")).ok() == fs::read(src.join("SKILL.md")).ok() {
+    if dst.is_dir() && owned(src, dst) && same_tree(src, dst)? {
         fs::remove_dir_all(dst)?;
         return Ok("-");
     }
@@ -262,6 +321,9 @@ fn remove_link(path: &Path) -> io::Result<()> {
 }
 
 fn copy_dir(src: &Path, dst: &Path) -> io::Result<()> {
+    if fs::symlink_metadata(src)?.file_type().is_symlink() {
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, "source symlinks must be materialized before copying"));
+    }
     fs::create_dir_all(dst)?;
     for entry in fs::read_dir(src)? {
         let entry = entry?;
@@ -270,7 +332,9 @@ fn copy_dir(src: &Path, dst: &Path) -> io::Result<()> {
             continue;
         }
         let to = dst.join(&name);
-        if entry.file_type()?.is_dir() {
+        if entry.file_type()?.is_symlink() {
+            return Err(io::Error::new(io::ErrorKind::InvalidInput, "source contains symlink"));
+        } else if entry.file_type()?.is_dir() {
             copy_dir(&entry.path(), &to)?;
         } else {
             fs::copy(entry.path(), to)?;
@@ -323,12 +387,91 @@ mod tests {
         let src = repo_root().join(SKILLS.iter().find(|s| s.name == "hallmark").unwrap().path);
         let dst = tmp.join("hallmark");
         fs::create_dir_all(&tmp).unwrap();
-        assert_eq!(place(&src, &dst, false).unwrap(), "→");
-        assert_eq!(place(&src, &dst, false).unwrap(), "=");
-        assert_eq!(remove(&src, &dst).unwrap(), "-");
+        #[cfg(unix)]
+        {
+            assert_eq!(place(&src, &dst, false).unwrap(), "→");
+            assert_eq!(place(&src, &dst, false).unwrap(), "=");
+            assert_eq!(remove(&src, &dst).unwrap(), "-");
+        }
         assert_eq!(place(&src, &dst, true).unwrap(), "+");
+        assert_eq!(place(&src, &dst, true).unwrap(), "=");
         assert_eq!(remove(&src, &dst).unwrap(), "-");
         assert!(!dst.exists());
         fs::remove_dir_all(&tmp).ok();
+    }
+
+    fn fixture(name: &str) -> (PathBuf, PathBuf, PathBuf) {
+        let root = env::temp_dir().join(format!("skills-bundle-{}-{name}", std::process::id()));
+        let src = root.join("source"); let dst = root.join("installed");
+        fs::create_dir_all(src.join("references")).unwrap();
+        fs::write(src.join("SKILL.md"), "---\nname: example\ndescription: test\n---\nExample").unwrap();
+        fs::write(src.join("references/guide.md"), "guide").unwrap();
+        (root, src, dst)
+    }
+
+    #[test]
+    fn unowned_matching_skill_is_preserved() {
+        let (root, src, dst) = fixture("unowned");
+        copy_dir(&src, &dst).unwrap();
+        assert!(place(&src, &dst, true).is_err());
+        assert_eq!(remove(&src, &dst).unwrap(), "·");
+        assert!(dst.join("SKILL.md").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn directories_without_skill_files_are_preserved() {
+        let (root, src, dst) = fixture("missing-skill");
+        fs::remove_file(src.join("SKILL.md")).unwrap();
+        fs::create_dir_all(&dst).unwrap();
+        fs::write(dst.join("personal.txt"), "keep").unwrap();
+        assert_eq!(remove(&src, &dst).unwrap(), "·");
+        assert!(place(&src, &dst, true).is_err());
+        assert!(dst.join("personal.txt").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn changed_or_added_files_are_preserved() {
+        let (root, src, dst) = fixture("modified");
+        place(&src, &dst, true).unwrap();
+        fs::write(dst.join("references/guide.md"), "my edits").unwrap();
+        assert_eq!(remove(&src, &dst).unwrap(), "·");
+        fs::write(dst.join("references/guide.md"), "guide").unwrap();
+        fs::write(dst.join("personal.txt"), "keep").unwrap();
+        assert_eq!(remove(&src, &dst).unwrap(), "·");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn ownership_from_another_source_is_preserved() {
+        let (root, src, dst) = fixture("ownership");
+        place(&src, &dst, true).unwrap();
+        fs::write(dst.join(OWNER_FILE), "different source").unwrap();
+        assert_eq!(remove(&src, &dst).unwrap(), "·");
+        assert!(dst.exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn source_update_does_not_delete_installed_copy() {
+        let (root, src, dst) = fixture("updated-source");
+        place(&src, &dst, true).unwrap();
+        fs::write(src.join("references/guide.md"), "new upstream version").unwrap();
+        assert_eq!(remove(&src, &dst).unwrap(), "·");
+        assert!(place(&src, &dst, true).is_err());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn unrelated_symlink_is_preserved() {
+        let (root, src, dst) = fixture("other-link");
+        let other = root.join("other"); fs::create_dir_all(&other).unwrap();
+        std::os::unix::fs::symlink(&other, &dst).unwrap();
+        assert!(place(&src, &dst, false).is_err());
+        assert_eq!(remove(&src, &dst).unwrap(), "· (link points elsewhere, kept)");
+        assert_eq!(fs::read_link(&dst).unwrap(), other);
+        fs::remove_dir_all(root).unwrap();
     }
 }

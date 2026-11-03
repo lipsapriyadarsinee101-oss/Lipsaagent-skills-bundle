@@ -50,7 +50,21 @@ cargo run --release -- doctor                                # check submodules 
 | `codex` | `~/.codex/skills` | OpenAI Codex |
 | `agents` | `~/.agents/skills` | OpenCode, Antigravity, Gemini CLI and other Agent Skills hosts |
 
-The installer never overwrites a skill folder you made yourself; it reports it and moves on.
+The installer never overwrites an existing folder or a link pointing elsewhere. Copied installs carry an ownership marker. Reinstalling an unchanged owned copy is a no-op. Uninstall removes only an owned copy that still matches the source tree; local edits and additional files are preserved. Existing copies made by older versions have no marker and are preserved. Conflicts, unknown selectors and missing sources return a failing exit code.
+
+### Recorded installation demonstration
+
+`cargo test` includes CLI tests that install, repeat-install and uninstall into all three agent project folders. They also check conflict handling, local-file preservation and invalid selectors. Unix tests additionally exercise symlinks. Windows tests use copy mode without requiring administrator privileges.
+
+Record the demonstration yourself (Python 3 required):
+
+```bash
+cargo build
+python scripts/demo_install.py --binary target/debug/skills-bundle --output demo-transcript.txt
+# Windows: use target/debug/skills-bundle.exe
+```
+
+The demonstration uses a temporary project, checks the files at every stage and leaves global installations untouched. CI runs it on Windows, Linux and macOS and uploads a transcript per operating system. These checks verify installation into supported folders; they do not verify that each agent application executes every upstream skill. REA's MCP server remains a separate optional setup.
 
 ### Extra setup for REA
 
