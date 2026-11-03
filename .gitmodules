@@ -1,0 +1,18 @@
+[submodule "vendor/rea"]
+	path = vendor/rea
+	url = https://github.com/morluto/rea.git
+[submodule "vendor/ponytail"]
+	path = vendor/ponytail
+	url = https://github.com/DietrichGebert/ponytail.git
+[submodule "vendor/hallmark"]
+	path = vendor/hallmark
+	url = https://github.com/Nutlope/hallmark.git
+[submodule "vendor/humanizer"]
+	path = vendor/humanizer
+	url = https://github.com/blader/humanizer.git
+[submodule "vendor/impeccable"]
+	path = vendor/impeccable
+	url = https://github.com/pbakaus/impeccable.git
+[submodule "vendor/ui-ux-pro-max"]
+	path = vendor/ui-ux-pro-max
+	url = https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git
