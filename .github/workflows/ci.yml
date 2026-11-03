@@ -13,3 +13,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test
       - run: cargo run -- doctor
+      - name: Record install and uninstall demonstration
+        shell: bash
+        run: |
+          cargo build
+          binary=target/debug/skills-bundle
+          if [ "$RUNNER_OS" = "Windows" ]; then binary="$binary.exe"; fi
+          python scripts/demo_install.py --binary "$binary" --output demo-transcript.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: install-demo-${{ matrix.os }}
+          path: demo-transcript.txt
