@@ -33,7 +33,10 @@ fn conflicts_and_invalid_selection_fail() {
     assert!(!invoke(&root, &["install", "--project", "--only", "does-not-exist"]).status.success());
     assert!(!invoke(&root, &["install", "--agent", "does-not-exist"]).status.success());
     assert!(!invoke(&root, &["install", "--project", "--agent", "claude"]).status.success());
-    assert!(!invoke(&root, &["install", "--project", "--only", "claude-api"]).status.success());
+    assert!(invoke(&root, &["install", "--project", "--copy", "--only", "claude-api"]).status.success());
+    assert!(root.join(".codex/skills/claude-api/SKILL.md").is_file());
+    assert!(invoke(&root, &["uninstall", "--project", "--only", "claude-api"]).status.success());
+    assert!(!root.join(".codex/skills/claude-api").exists());
     assert!(!root.join(".claude").exists());
     fs::remove_dir_all(root).unwrap();
 }

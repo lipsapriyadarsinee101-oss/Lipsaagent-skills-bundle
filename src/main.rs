@@ -45,6 +45,7 @@ const SKILLS: &[Skill] = &[
     s("anthropic", "mcp-builder", "vendor/anthropic-skills/skills/mcp-builder"),
     s("anthropic", "skill-creator", "vendor/anthropic-skills/skills/skill-creator"),
     s("anthropic", "webapp-testing", "vendor/anthropic-skills/skills/webapp-testing"),
+    s("anthropic", "claude-api", "vendor/anthropic-skills/skills/claude-api"),
     s("vercel", "react-best-practices", "vendor/vercel-agent-skills/skills/react-best-practices"),
     s("vercel", "composition-patterns", "vendor/vercel-agent-skills/skills/composition-patterns"),
     s("vercel", "react-view-transitions", "vendor/vercel-agent-skills/skills/react-view-transitions"),
@@ -377,8 +378,8 @@ mod tests {
     }
 
     #[test]
-    fn provider_specific_api_skill_is_not_installed() {
-        assert!(!SKILLS.iter().any(|skill| skill.name == "claude-api"));
+    fn provider_specific_api_skill_is_available() {
+        assert!(SKILLS.iter().any(|skill| skill.name == "claude-api"));
     }
 
     #[test]

@@ -12,7 +12,7 @@ One repo for ten agent-skill projects, pulled in as git submodules, with a small
 | **UI UX Pro Max** | Design intelligence: styles, palettes, typography, stack guidelines | `ui-ux-pro-max`, `design`, `design-system`, `ui-styling`, `brand`, `banner-design`, `slides` | [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT |
 | **Rust Skills** | 265 Rust rules: ownership, errors, async, unsafe, API design, performance | `rust-skills` | [leonardomso/rust-skills](https://github.com/leonardomso/rust-skills) | MIT |
 | **Engineering** | Addy Osmani's full dev lifecycle: spec, plan, TDD, debug, review, secure, ship | 25 skills, e.g. `spec-driven-development`, `test-driven-development`, `security-and-hardening` (`list` shows all) | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT |
-| **Anthropic** | Official skills for building MCP servers, new skills and web app tests | `mcp-builder`, `skill-creator`, `webapp-testing` | [anthropics/skills](https://github.com/anthropics/skills) | Apache 2.0 |
+| **Anthropic** | Official skills for building MCP servers, new skills, web app tests and API integrations | `mcp-builder`, `skill-creator`, `webapp-testing`, `claude-api` | [anthropics/skills](https://github.com/anthropics/skills) | Apache 2.0 |
 | **Vercel** | React and React Native performance and composition guidance | `react-best-practices`, `composition-patterns`, `react-view-transitions`, `react-native-skills` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT |
 
 ## Install
@@ -24,7 +24,7 @@ Needs git and [Rust](https://rust-lang.org/tools/install).
 ```bash
 git clone --recurse-submodules --shallow-submodules https://github.com/lipsapriyadarsinee101-oss/Lipsaagent-skills-bundle.git
 cd Lipsaagent-skills-bundle
-cargo run --release -- install            # all 50 skills into ~/.codex/skills
+cargo run --release -- install            # all 51 skills into ~/.codex/skills
 ```
 
 Restart your agent afterwards so it picks the skills up.
