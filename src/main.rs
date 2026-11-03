@@ -426,10 +426,6 @@ mod tests {
         fs::create_dir_all(&dst).unwrap();
         fs::write(dst.join("personal.txt"), "keep").unwrap();
         assert_eq!(remove(&src, &dst).unwrap(), "·");
-        fs::remove_file(dst.join("personal.txt")).unwrap();
-        fs::create_dir_all(dst.join("node_modules")).unwrap();
-        fs::write(dst.join("node_modules/personal.txt"), "keep").unwrap();
-        assert_eq!(remove(&src, &dst).unwrap(), "·");
         assert!(place(&src, &dst, true).is_err());
         assert!(dst.join("personal.txt").exists());
         fs::remove_dir_all(root).unwrap();
@@ -443,6 +439,10 @@ mod tests {
         assert_eq!(remove(&src, &dst).unwrap(), "·");
         fs::write(dst.join("references/guide.md"), "guide").unwrap();
         fs::write(dst.join("personal.txt"), "keep").unwrap();
+        assert_eq!(remove(&src, &dst).unwrap(), "·");
+        fs::remove_file(dst.join("personal.txt")).unwrap();
+        fs::create_dir_all(dst.join("node_modules")).unwrap();
+        fs::write(dst.join("node_modules/personal.txt"), "keep").unwrap();
         assert_eq!(remove(&src, &dst).unwrap(), "·");
         fs::remove_dir_all(root).unwrap();
     }
