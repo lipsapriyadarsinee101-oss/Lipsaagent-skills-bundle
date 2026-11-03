@@ -17,6 +17,8 @@ One repo for ten agent-skill projects, pulled in as git submodules, with a small
 
 ## Install
 
+**Windows, easiest:** download [`setup-windows.bat`](setup-windows.bat) and double-click it. It downloads the bundle into your user folder (or updates it) and installs every skill. Run it again any time to update.
+
 Needs git and [Rust](https://rust-lang.org/tools/install).
 
 ```bash
