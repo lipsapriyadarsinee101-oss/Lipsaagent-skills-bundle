@@ -222,7 +222,7 @@ fn place(src: &Path, dst: &Path, copy: bool) -> io::Result<&'static str> {
         if target == src {
             return Ok("=");
         }
-        fs::remove_file(dst)?; // stale link from an older checkout
+        remove_link(dst)?; // stale link from an older checkout
     } else if dst.exists() {
         return Err(io::Error::new(io::ErrorKind::AlreadyExists, "already exists, left untouched"));
     }
@@ -241,7 +241,7 @@ fn place(src: &Path, dst: &Path, copy: bool) -> io::Result<&'static str> {
 fn remove(src: &Path, dst: &Path) -> io::Result<&'static str> {
     if let Ok(target) = fs::read_link(dst) {
         if target == src {
-            fs::remove_file(dst)?;
+            remove_link(dst)?;
             return Ok("-");
         }
         return Ok("· (link points elsewhere, kept)");
@@ -251,6 +251,14 @@ fn remove(src: &Path, dst: &Path) -> io::Result<&'static str> {
         return Ok("-");
     }
     Ok("·")
+}
+
+/// Windows deletes a folder symlink with remove_dir; Unix with remove_file.
+fn remove_link(path: &Path) -> io::Result<()> {
+    #[cfg(windows)]
+    return fs::remove_dir(path);
+    #[cfg(not(windows))]
+    return fs::remove_file(path);
 }
 
 fn copy_dir(src: &Path, dst: &Path) -> io::Result<()> {
