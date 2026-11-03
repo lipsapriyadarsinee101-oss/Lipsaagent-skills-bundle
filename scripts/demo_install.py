@@ -10,7 +10,7 @@ parser.add_argument('--output', default='demo-transcript.txt')
 args = parser.parse_args()
 binary = Path(args.binary).resolve(strict=True)
 lines = ['Skills Bundle: recorded command-line demonstration',
-         'Targets: Claude Code, Codex and shared Agent Skills project folders.',
+         'Targets: Codex and shared Agent Skills project folders.',
          'This checks file installation, not execution inside each agent application.', '']
 with tempfile.TemporaryDirectory(prefix='skills-bundle-demo-') as temporary:
     root = Path(temporary)
@@ -28,11 +28,11 @@ with tempfile.TemporaryDirectory(prefix='skills-bundle-demo-') as temporary:
                   'Exit code: ' + str(result.returncode)]
         if result.returncode:
             raise RuntimeError('\n'.join(lines))
-        for folder in ['.claude', '.codex', '.agents']:
+        for folder in ['.codex', '.agents']:
             skill = root / folder / 'skills' / 'humanizer'
             assert skill.joinpath('SKILL.md').is_file() if index < 2 else not skill.exists()
-        lines += ['Verified: all three targets ' + ('contain the skill.' if index < 2 else 'removed the installed skill.'), '']
-lines.append('PASS: install, repeat install and uninstall across all three target folders.')
+        lines += ['Verified: both targets ' + ('contain the skill.' if index < 2 else 'removed the installed skill.'), '']
+lines.append('PASS: install, repeat install and uninstall across both target folders.')
 output = Path(args.output)
 output.parent.mkdir(parents=True, exist_ok=True)
 output.write_text('\n'.join(lines), encoding='utf-8')

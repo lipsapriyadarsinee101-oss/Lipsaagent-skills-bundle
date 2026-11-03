@@ -1,6 +1,6 @@
 # Lipsa Agent Skills Bundle
 
-One repo for ten agent-skill projects, pulled in as git submodules, with a small Rust CLI that installs them into Claude Code, Codex and other Agent Skills hosts.
+One repo for ten agent-skill projects, pulled in as git submodules, with a small Rust CLI that installs them into Codex and other Agent Skills hosts.
 
 | Bundle | What it does | Skills | Upstream | License |
 |---|---|---|---|---|
@@ -12,7 +12,7 @@ One repo for ten agent-skill projects, pulled in as git submodules, with a small
 | **UI UX Pro Max** | Design intelligence: styles, palettes, typography, stack guidelines | `ui-ux-pro-max`, `design`, `design-system`, `ui-styling`, `brand`, `banner-design`, `slides` | [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT |
 | **Rust Skills** | 265 Rust rules: ownership, errors, async, unsafe, API design, performance | `rust-skills` | [leonardomso/rust-skills](https://github.com/leonardomso/rust-skills) | MIT |
 | **Engineering** | Addy Osmani's full dev lifecycle: spec, plan, TDD, debug, review, secure, ship | 25 skills, e.g. `spec-driven-development`, `test-driven-development`, `security-and-hardening` (`list` shows all) | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT |
-| **Anthropic** | Official skills for building MCP servers, new skills, web app tests and Claude API apps | `mcp-builder`, `skill-creator`, `webapp-testing`, `claude-api` | [anthropics/skills](https://github.com/anthropics/skills) | Apache 2.0 |
+| **Anthropic** | Official skills for building MCP servers, new skills and web app tests | `mcp-builder`, `skill-creator`, `webapp-testing` | [anthropics/skills](https://github.com/anthropics/skills) | Apache 2.0 |
 | **Vercel** | React and React Native performance and composition guidance | `react-best-practices`, `composition-patterns`, `react-view-transitions`, `react-native-skills` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT |
 
 ## Install
@@ -24,7 +24,7 @@ Needs git and [Rust](https://rust-lang.org/tools/install).
 ```bash
 git clone --recurse-submodules --shallow-submodules https://github.com/lipsapriyadarsinee101-oss/Lipsaagent-skills-bundle.git
 cd Lipsaagent-skills-bundle
-cargo run --release -- install            # all 51 skills into ~/.claude/skills
+cargo run --release -- install            # all 50 skills into ~/.codex/skills
 ```
 
 Restart your agent afterwards so it picks the skills up.
@@ -35,10 +35,10 @@ Installs are symlinks into this clone, so `git pull` updates every agent at once
 
 ```bash
 cargo run --release -- list                                  # what's in the bundle
-cargo run --release -- install --agent all                   # Claude Code, Codex and ~/.agents/skills
+cargo run --release -- install --agent all                   # Codex and ~/.agents/skills
 cargo run --release -- install --agent codex
 cargo run --release -- install --only hallmark,humanizer     # by bundle or skill name
-cargo run --release -- install --project                     # into ./.claude/skills of the current folder
+cargo run --release -- install --project                     # into ./.codex/skills of the current folder
 cargo run --release -- install --copy                        # copy instead of symlink (default on Windows)
 cargo run --release -- uninstall --agent all                 # removes only what this tool installed
 cargo run --release -- doctor                                # check submodules and installs
@@ -46,15 +46,14 @@ cargo run --release -- doctor                                # check submodules 
 
 | `--agent` | Folder | Used by |
 |---|---|---|
-| `claude` (default) | `~/.claude/skills` | Claude Code (OpenCode also reads it) |
-| `codex` | `~/.codex/skills` | OpenAI Codex |
+| `codex` (default) | `~/.codex/skills` | OpenAI Codex |
 | `agents` | `~/.agents/skills` | OpenCode, Antigravity, Gemini CLI and other Agent Skills hosts |
 
 The installer never overwrites an existing folder or a link pointing elsewhere. Copied installs carry an ownership marker. Reinstalling an unchanged owned copy is a no-op. Uninstall removes only an owned copy that still matches the source tree; local edits and additional files are preserved. Existing copies made by older versions have no marker and are preserved. Conflicts, unknown selectors and missing sources return a failing exit code.
 
 ### Recorded installation demonstration
 
-`cargo test` includes CLI tests that install, repeat-install and uninstall into all three agent project folders. They also check conflict handling, local-file preservation and invalid selectors. Unix tests additionally exercise symlinks. Windows tests use copy mode without requiring administrator privileges.
+`cargo test` includes CLI tests that install, repeat-install and uninstall into both supported agent project folders. They also check the default target, removed options, conflict handling, local-file preservation and invalid selectors. Unix tests additionally exercise symlinks. Windows tests use copy mode without requiring administrator privileges.
 
 Record the demonstration yourself (Python 3 required):
 

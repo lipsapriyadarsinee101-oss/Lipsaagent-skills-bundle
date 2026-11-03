@@ -1,8 +1,8 @@
 [package]
 name = "skills-bundle"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "Installs the vendored agent skills (design, writing, Rust, engineering and more) into Claude Code, Codex and other agents"
+description = "Installs the vendored agent skills (design, writing, Rust, engineering and more) into Codex and other Agent Skills hosts"
 license = "MIT"
 publish = false
 

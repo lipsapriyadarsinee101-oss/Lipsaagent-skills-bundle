@@ -2,7 +2,7 @@
 //!
 //! Usage:
 //!   skills-bundle list
-//!   skills-bundle install   [--agent claude|codex|agents|all] [--project] [--copy] [--only NAME,...]
+//!   skills-bundle install   [--agent codex|agents|all] [--project] [--copy] [--only NAME,...]
 //!   skills-bundle uninstall [--agent ...] [--project] [--only NAME,...]
 //!   skills-bundle doctor
 
@@ -45,7 +45,6 @@ const SKILLS: &[Skill] = &[
     s("anthropic", "mcp-builder", "vendor/anthropic-skills/skills/mcp-builder"),
     s("anthropic", "skill-creator", "vendor/anthropic-skills/skills/skill-creator"),
     s("anthropic", "webapp-testing", "vendor/anthropic-skills/skills/webapp-testing"),
-    s("anthropic", "claude-api", "vendor/anthropic-skills/skills/claude-api"),
     s("vercel", "react-best-practices", "vendor/vercel-agent-skills/skills/react-best-practices"),
     s("vercel", "composition-patterns", "vendor/vercel-agent-skills/skills/composition-patterns"),
     s("vercel", "react-view-transitions", "vendor/vercel-agent-skills/skills/react-view-transitions"),
@@ -79,7 +78,6 @@ const SKILLS: &[Skill] = &[
 
 /// Agent name -> skills dir relative to home (global) or project root (--project).
 const AGENTS: &[(&str, &str)] = &[
-    ("claude", ".claude/skills"),
     ("codex", ".codex/skills"),
     ("agents", ".agents/skills"), // OpenCode, Antigravity, Gemini and other Agent Skills hosts
 ];
@@ -117,7 +115,7 @@ fn help() {
          install     link skills into agent folders\n  \
          uninstall   remove links this tool created\n  \
          doctor      check submodules and installed links\n\n\
-         options:\n  --agent claude|codex|agents|all   target agent (default: claude)\n  \
+         options:\n  --agent codex|agents|all   target agent (default: codex)\n  \
          --project   install into ./<agent dir> instead of your home folder\n  \
          --copy      copy files instead of symlinking (default on Windows)\n  \
          --only a,b  only these bundles or skill names (e.g. --only hallmark,ponytail)"
@@ -125,7 +123,7 @@ fn help() {
 }
 
 fn parse_opts(args: &[String]) -> Result<Opts, String> {
-    let mut o = Opts { agents: vec!["claude"], project: false, copy: cfg!(windows), only: None };
+    let mut o = Opts { agents: vec!["codex"], project: false, copy: cfg!(windows), only: None };
     let mut it = args.iter();
     while let Some(a) = it.next() {
         match a.as_str() {
@@ -138,7 +136,7 @@ fn parse_opts(args: &[String]) -> Result<Opts, String> {
                 } else {
                     v.split(',')
                         .map(|n| AGENTS.iter().find(|(k, _)| *k == n).map(|(k, _)| *k)
-                            .ok_or_else(|| format!("unknown agent '{n}' (claude, codex, agents, all)")))
+                            .ok_or_else(|| format!("unknown agent '{n}' (codex, agents, all)")))
                         .collect::<Result<_, _>>()?
                 };
             }
@@ -365,6 +363,23 @@ fn doctor() -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn codex_is_the_default_target() {
+        assert_eq!(parse_opts(&[]).unwrap().agents, vec!["codex"]);
+    }
+
+    #[test]
+    fn all_targets_excludes_removed_host() {
+        let args = vec!["--agent".into(), "all".into()];
+        assert_eq!(parse_opts(&args).unwrap().agents, vec!["codex", "agents"]);
+        assert!(parse_opts(&["--agent".into(), "claude".into()]).is_err());
+    }
+
+    #[test]
+    fn provider_specific_api_skill_is_not_installed() {
+        assert!(!SKILLS.iter().any(|skill| skill.name == "claude-api"));
+    }
 
     #[test]
     fn every_skill_has_a_skill_md() {

@@ -11,12 +11,12 @@ fn copy_install_uninstall_for_every_agent() {
     fs::create_dir_all(&root).unwrap();
     let result = invoke(&root, &["install", "--project", "--agent", "all", "--copy", "--only", "humanizer"]);
     assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
-    for agent in [".claude", ".codex", ".agents"] {
+    for agent in [".codex", ".agents"] {
         assert!(root.join(agent).join("skills/humanizer/SKILL.md").is_file());
     }
     assert!(invoke(&root, &["install", "--project", "--agent", "all", "--copy", "--only", "humanizer"]).status.success());
     assert!(invoke(&root, &["uninstall", "--project", "--agent", "all", "--only", "humanizer"]).status.success());
-    for agent in [".claude", ".codex", ".agents"] {
+    for agent in [".codex", ".agents"] {
         assert!(!root.join(agent).join("skills/humanizer").exists());
     }
     fs::remove_dir_all(root).unwrap();
@@ -32,5 +32,21 @@ fn conflicts_and_invalid_selection_fail() {
     assert_eq!(fs::read_to_string(dst.join("personal.txt")).unwrap(), "keep me");
     assert!(!invoke(&root, &["install", "--project", "--only", "does-not-exist"]).status.success());
     assert!(!invoke(&root, &["install", "--agent", "does-not-exist"]).status.success());
+    assert!(!invoke(&root, &["install", "--project", "--agent", "claude"]).status.success());
+    assert!(!invoke(&root, &["install", "--project", "--only", "claude-api"]).status.success());
+    assert!(!root.join(".claude").exists());
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn default_install_creates_only_codex_folder() {
+    let root = std::env::temp_dir().join(format!("bundle-default-{}", std::process::id()));
+    fs::create_dir_all(&root).unwrap();
+    assert!(invoke(&root, &["install", "--project", "--copy", "--only", "humanizer"]).status.success());
+    assert!(root.join(".codex/skills/humanizer/SKILL.md").is_file());
+    assert!(!root.join(".claude").exists());
+    assert!(!root.join(".agents").exists());
+    assert!(invoke(&root, &["uninstall", "--project", "--only", "humanizer"]).status.success());
+    assert!(!root.join(".codex/skills/humanizer").exists());
     fs::remove_dir_all(root).unwrap();
 }

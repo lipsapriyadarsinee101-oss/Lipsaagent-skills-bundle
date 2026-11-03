@@ -25,7 +25,7 @@ cargo run --release -- install --agent all || goto :end
 echo.
 cargo run --release -q -- doctor
 echo.
-echo Done. Restart Claude Code to load the skills.
+echo Done. Restart Codex or your Agent Skills host to load the skills.
 
 :end
 echo.
