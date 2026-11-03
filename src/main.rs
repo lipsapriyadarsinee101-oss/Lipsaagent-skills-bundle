@@ -244,18 +244,18 @@ fn owned(src: &Path, dst: &Path) -> bool {
 
 /// Refuse to remove a copied skill after local edits or additional user files.
 fn same_tree(src: &Path, dst: &Path) -> io::Result<bool> {
-    let names = |path: &Path| -> io::Result<Vec<std::ffi::OsString>> {
+    let names = |path: &Path, source: bool| -> io::Result<Vec<std::ffi::OsString>> {
         let mut result = Vec::new();
         for entry in fs::read_dir(path)? {
             let entry = entry?;
             let name = entry.file_name();
-            if name != OWNER_FILE && name != ".git" && name != "node_modules" { result.push(name); }
+            if name != OWNER_FILE && !(source && (name == ".git" || name == "node_modules")) { result.push(name); }
         }
         result.sort();
         Ok(result)
     };
-    let entries = names(src)?;
-    if entries != names(dst)? { return Ok(false); }
+    let entries = names(src, true)?;
+    if entries != names(dst, false)? { return Ok(false); }
     for name in entries {
         let a = src.join(&name); let b = dst.join(&name);
         let at = fs::symlink_metadata(&a)?.file_type();
@@ -425,6 +425,10 @@ mod tests {
         fs::remove_file(src.join("SKILL.md")).unwrap();
         fs::create_dir_all(&dst).unwrap();
         fs::write(dst.join("personal.txt"), "keep").unwrap();
+        assert_eq!(remove(&src, &dst).unwrap(), "·");
+        fs::remove_file(dst.join("personal.txt")).unwrap();
+        fs::create_dir_all(dst.join("node_modules")).unwrap();
+        fs::write(dst.join("node_modules/personal.txt"), "keep").unwrap();
         assert_eq!(remove(&src, &dst).unwrap(), "·");
         assert!(place(&src, &dst, true).is_err());
         assert!(dst.join("personal.txt").exists());
