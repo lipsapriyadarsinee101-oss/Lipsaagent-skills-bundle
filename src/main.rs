@@ -5,6 +5,7 @@
 //!   skills-bundle install   [--agent codex|agents|all] [--project] [--copy] [--only NAME,...]
 //!   skills-bundle uninstall [--agent ...] [--project] [--only NAME,...]
 //!   skills-bundle doctor
+//!   skills-bundle verify    [--agent codex|agents|all] [--project] [--only NAME,...]
 
 use std::env;
 use std::fs;
@@ -98,6 +99,7 @@ fn main() -> ExitCode {
         "install" => run(&o, true),
         "uninstall" => run(&o, false),
         "doctor" => doctor(),
+        "verify" => verify(&o),
         _ => Ok(help()),
     });
     match result {
@@ -115,7 +117,8 @@ fn help() {
          commands:\n  list        show every skill in the bundle\n  \
          install     link skills into agent folders\n  \
          uninstall   remove links this tool created\n  \
-         doctor      check submodules and installed links\n\n\
+         doctor      check submodules and installed links\n  \
+         verify      compare installed files with checked-out sources\n\n\
          options:\n  --agent codex|agents|all   target agent (default: codex)\n  \
          --project   install into ./<agent dir> instead of your home folder\n  \
          --copy      copy files instead of symlinking (default on Windows)\n  \
@@ -179,11 +182,7 @@ fn list() {
     }
 }
 
-fn run(o: &Opts, install: bool) -> Result<(), String> {
-    let root = repo_root();
-    let base = if o.project { env::current_dir().map_err(|e| e.to_string())? } else { home()? };
-    let mut missing = false;
-    let mut failures = 0;
+fn validate_selection(o: &Opts) -> Result<(), String> {
     if selected(o).next().is_none() {
         return Err("no skills match --only; run list for valid names".into());
     }
@@ -194,6 +193,15 @@ fn run(o: &Opts, install: bool) -> Result<(), String> {
             }
         }
     }
+    Ok(())
+}
+
+fn run(o: &Opts, install: bool) -> Result<(), String> {
+    validate_selection(o)?;
+    let root = repo_root();
+    let base = if o.project { env::current_dir().map_err(|e| e.to_string())? } else { home()? };
+    let mut missing = false;
+    let mut failures = 0;
     for agent in &o.agents {
         let rel = AGENTS.iter().find(|(n, _)| n == agent).unwrap().1;
         let dir = base.join(rel);
@@ -229,6 +237,42 @@ fn run(o: &Opts, install: bool) -> Result<(), String> {
 }
 
 const OWNER_FILE: &str = ".skills-bundle-owner";
+
+fn verify(o: &Opts) -> Result<(), String> {
+    validate_selection(o)?;
+    let root = repo_root();
+    let base = if o.project { env::current_dir().map_err(|e| e.to_string())? } else { home()? };
+    let mut failures = 0;
+    for agent in &o.agents {
+        let rel = AGENTS.iter().find(|(name, _)| name == agent).unwrap().1;
+        println!("{agent}: {}", base.join(rel).display());
+        for skill in selected(o) {
+            let result = verify_skill(&root.join(skill.path), &base.join(rel).join(skill.name));
+            match result {
+                Ok(true) => println!("  ok {}", skill.name),
+                Ok(false) => {
+                    failures += 1;
+                    println!("  FAIL {} (missing, changed or unexpected files/link)", skill.name);
+                }
+                Err(error) => {
+                    failures += 1;
+                    println!("  FAIL {} ({error})", skill.name);
+                }
+            }
+        }
+    }
+    if failures == 0 { Ok(()) } else { Err(format!("verification failed for {failures} installed skills")) }
+}
+
+fn verify_skill(src: &Path, dst: &Path) -> io::Result<bool> {
+    if !src.join("SKILL.md").is_file() || !dst.join("SKILL.md").is_file() {
+        return Ok(false);
+    }
+    if fs::symlink_metadata(dst)?.file_type().is_symlink() {
+        return Ok(fs::canonicalize(dst)? == fs::canonicalize(src)?);
+    }
+    same_tree(src, dst)
+}
 
 fn ownership(src: &Path) -> io::Result<String> {
     Ok(format!("skills-bundle-v1\n{}\n", fs::canonicalize(src)?.display()))
@@ -487,11 +531,21 @@ mod tests {
     #[test]
     fn unrelated_symlink_is_preserved() {
         let (root, src, dst) = fixture("other-link");
-        let other = root.join("other"); fs::create_dir_all(&other).unwrap();
+        let other = root.join("other"); copy_dir(&src, &other).unwrap();
         std::os::unix::fs::symlink(&other, &dst).unwrap();
+        assert!(!verify_skill(&src, &dst).unwrap());
         assert!(place(&src, &dst, false).is_err());
         assert_eq!(remove(&src, &dst).unwrap(), "· (link points elsewhere, kept)");
         assert_eq!(fs::read_link(&dst).unwrap(), other);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn verification_accepts_expected_symlink() {
+        let (root, src, dst) = fixture("verify-link");
+        place(&src, &dst, false).unwrap();
+        assert!(verify_skill(&src, &dst).unwrap());
         fs::remove_dir_all(root).unwrap();
     }
 }
