@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Added the read-only Rust `verify` command to detect missing or changed installed files, extra files and unexpected links, with project/agent/skill filters and a failing exit code for differences.
+
 ## 0.2.0
 
 - Codex is now the default installation target. `--agent all` installs into Codex and the shared Agent Skills folder.

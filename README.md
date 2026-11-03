@@ -42,6 +42,8 @@ cargo run --release -- install --project                     # into ./.codex/ski
 cargo run --release -- install --copy                        # copy instead of symlink (default on Windows)
 cargo run --release -- uninstall --agent all                 # removes only what this tool installed
 cargo run --release -- doctor                                # check submodules and installs
+cargo run --release -- verify --agent codex                   # compare installed files with sources
+cargo run --release -- verify --project --only humanizer      # check one skill in this project
 ```
 
 | `--agent` | Folder | Used by |
@@ -50,6 +52,8 @@ cargo run --release -- doctor                                # check submodules 
 | `agents` | `~/.agents/skills` | OpenCode, Antigravity, Gemini CLI and other Agent Skills hosts |
 
 The installer never overwrites an existing folder or a link pointing elsewhere. Copied installs carry an ownership marker. Reinstalling an unchanged owned copy is a no-op. Uninstall removes only an owned copy that still matches the source tree; local edits and additional files are preserved. Existing copies made by older versions have no marker and are preserved. Conflicts, unknown selectors and missing sources return a failing exit code.
+
+`verify` is read-only. It compares copied skill files and supporting assets against this checkout, or checks that a linked installation points to the expected source. Missing files, edits, extra files and unexpected links cause a failing exit code. It never repairs or deletes anything. This checks installation consistency with your local sources, not upstream authenticity or whether a skill works inside an agent application.
 
 ### Recorded installation demonstration
 

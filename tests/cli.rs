@@ -53,3 +53,28 @@ fn default_install_creates_only_codex_folder() {
     assert!(!root.join(".codex/skills/humanizer").exists());
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn verify_detects_missing_changed_and_extra_files_without_writing() {
+    let root = std::env::temp_dir().join(format!("bundle-verify-{}", std::process::id()));
+    fs::create_dir_all(&root).unwrap();
+    let options = ["verify", "--project", "--agent", "all", "--only", "humanizer"];
+    assert!(!invoke(&root, &options).status.success(), "missing installs must fail");
+    assert!(!root.join(".codex").exists(), "verification must not create folders");
+    assert!(invoke(&root, &["install", "--project", "--agent", "all", "--copy", "--only", "humanizer"]).status.success());
+    assert!(invoke(&root, &options).status.success());
+    let skill = root.join(".codex/skills/humanizer/SKILL.md");
+    let original = fs::read(&skill).unwrap();
+    fs::write(&skill, "user edits").unwrap();
+    assert!(!invoke(&root, &options).status.success());
+    assert_eq!(fs::read_to_string(&skill).unwrap(), "user edits");
+    fs::write(&skill, original).unwrap();
+    let extra = root.join(".codex/skills/humanizer/personal.txt");
+    fs::write(&extra, "keep").unwrap();
+    assert!(!invoke(&root, &options).status.success());
+    assert_eq!(fs::read_to_string(&extra).unwrap(), "keep");
+    fs::remove_file(extra).unwrap();
+    assert!(invoke(&root, &options).status.success());
+    assert!(!invoke(&root, &["verify", "--project", "--only", "unknown-skill"]).status.success());
+    fs::remove_dir_all(root).unwrap();
+}
